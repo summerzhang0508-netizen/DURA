@@ -2,10 +2,7 @@ library(ggplot2)
 library(Hmisc)
 library(dplyr)
 
-#set up file location
-setwd("C:/Users/user/Documents/R_DURA")
-#read file
-#data <- read.csv("2_3_data.csv")
+
 data <- read.csv("early_late_4_phase_PCA_error_projectile_experiment _S1-projectile_experiment_etc_speed_neg3_0_neg2_0.csv")
 
 #select speed and phase (for graph producing)
@@ -64,7 +61,7 @@ summary_early_late <- summary_early_late %>%
   )
 
 #ggplot set up
-b_a_plot <- ggplot() +
+ggplot() +
   
   #point shade
   geom_violin(

@@ -2,8 +2,6 @@ library(ggplot2)
 library(Hmisc)
 library(dplyr)
 
-#set up file location
-setwd("C:/Users/user/Documents/R_DURA")
 #read file
 
 data <- read.csv("early_late_4_phase_PCA_error_projectile_experiment _S1-projectile_experiment_etc_speed_neg3_0_neg2_0.csv")

@@ -4,7 +4,6 @@ library(Hmisc)
 library(dplyr)
 
 #set up file location
-setwd("C:/Users/Administrator/Desktop/plot")
 #read file
 data <- read.csv("2_3_data.csv")
 
