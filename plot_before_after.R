@@ -3,7 +3,7 @@ library(Hmisc)
 library(dplyr)
 
 
-data <- read.csv("early_late_4_phase_PCA_error_projectile_experiment _S1-projectile_experiment_etc_speed_neg3_0_neg2_0.csv")
+data <- read.csv("J_data.csv")
 
 #select speed and phase (for graph producing)
 chosen_speeds <- c(-3, -2)
