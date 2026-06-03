@@ -21,7 +21,14 @@ early_late_data <- create_early_late(
 )
 
 #collect factors (ppid, period, levels)
-learning_data <- early_late_data %>%
+learning_data_first_4 %>%
+  group_by(phase, target_x_label) %>%
+  summarise(
+    Mean = mean(flip_min_distance_mPCA_mean_bc),
+    SD = sd(flip_min_distance_mPCA_mean_bc),
+    N = n(),
+    .groups = "drop"
+  ) <- early_late_data %>%
   mutate(
     ppid_full = factor(ppid_full),
     period = factor(period, levels = c("Early", "Late")),
@@ -31,7 +38,7 @@ learning_data <- early_late_data %>%
     ))
 
 learning_anova <- ezANOVA(
-  data = learning_data,
+  data = learning_data_before_after,
   dv = flip_min_distance_mPCA_mean_bc,
   wid = ppid_full,
   within = .(period),
@@ -43,3 +50,13 @@ learning_anova <- ezANOVA(
 anova_table <- as.data.frame(learning_anova$ANOVA)
 
 print(anova_table)
+
+
+learning_data_before_after %>%
+  group_by(phase, target_x_label) %>%
+  summarise(
+    Mean = mean(flip_min_distance_mPCA_mean_bc),
+    SD = sd(flip_min_distance_mPCA_mean_bc),
+    N = n(),
+    .groups = "drop"
+  )
