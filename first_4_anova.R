@@ -1,7 +1,7 @@
 library(car)
 library(dplyr)
 library(tidyr)
-
+library(afex)
 source("function_call.R")
 
 data <- read.csv("2_3_data.csv")
@@ -46,7 +46,7 @@ anova_table$sig <- ifelse(
   "*",
   ""
 )
-print(anova_table)
+print(anova_table, digit = 3)
 
 learning_data_first_4 %>%
   group_by(phase, target_x_label) %>%
