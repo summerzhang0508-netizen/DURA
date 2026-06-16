@@ -3,11 +3,11 @@ library(Hmisc)
 library(dplyr)
 
 
-data <- read.csv("J_data.csv")
+data <- read.csv("2_3_data.csv")
 
 #select speed and phase (for graph producing)
-chosen_speeds <- c(-3, -2)
-chosen_phases <- c("training_2")
+chosen_speeds <- c(-3)
+chosen_phases <- c("training_1", "training_2")
 
 plot_data <- data %>%
   filter(
@@ -25,21 +25,24 @@ early_late_data <- plot_data %>%
       trial_rank <= 4 ~ "Early",
       trial_rank > max_rank - 4 ~ "Late",
       TRUE ~ NA_character_
+    ),
+    phase = factor(
+      phase,
+      levels = c("training_1", "training_2"),
+      labels = c("Training 1", "Training 2")
     )
   ) %>%
   ungroup() %>%
   filter(!is.na(period)) %>%
-
-#create custom x positions
-mutate(
-  period = factor(period, levels = c("Early", "Late")),
-  target_x_label = factor(
-    target_x_label,
-    levels = c("L60", "L30", "R30", "R60")
-  ),
-  loc_num = as.numeric(target_x_label),
-  x_pos = ifelse(period == "Early", loc_num, loc_num + 5)
-)
+  mutate(
+    period = factor(period, levels = c("Early", "Late")),
+    target_x_label = factor(
+      target_x_label,
+      levels = c("L60", "L30", "R30", "R60")
+    ),
+    loc_num = as.numeric(target_x_label),
+    x_pos = ifelse(period == "Early", loc_num * 0.7, loc_num * 0.7 + 4)
+  )
 
 #data summary (for CI)
 summary_early_late <- early_late_data %>%
@@ -57,11 +60,11 @@ summary_early_late <- early_late_data %>%
 #set line connecting position
 summary_early_late <- summary_early_late %>%
   mutate(
-    phase_x = ifelse(period == "Early", 2.5, 7.5)
+    phase_x = ifelse(period == "Early", 1.7, 5.7)
   )
 
 #ggplot set up
-ggplot() +
+b_a_plot <- ggplot() +
   
   #point shade
   geom_violin(
@@ -98,6 +101,8 @@ ggplot() +
     title = "Test Graph (Early vs. Late)",
     x = "Trial Number",
     y = "Min Error to Target",
+    color= "Target ID",
+    fill = "Target ID"
   ) +
   
   #set line
@@ -140,10 +145,19 @@ ggplot() +
   )) +
   
   scale_x_continuous(
-    breaks = c(1, 2, 3, 4, 6, 7, 8, 9),
-    labels = c("L60", "L30", "R30", "R60",
-               "L60", "L30", "R30", "R60")
-  ) +
+    breaks = c(
+      1:4 * 0.7,
+      mean(c(2, 3) * 0.7),
+      1:4 * 0.7 + 4,
+      mean(c(2, 3) * 0.7 + 4)
+    ),
+    labels = c(
+      "L60", "L30", "R30", "R60", "\n\nEarly",
+      "L60", "L30", "R30", "R60", "\n\nLate"
+    )
+  )+
+  
+  
   
   #color for shade
   scale_fill_manual(values = c(
@@ -152,7 +166,15 @@ ggplot() +
     "R30" = "#1f00df",
     "R60" =  "#ff0404"
   )) +
-   facet_grid(speed_label ~ phase) +
+   facet_grid(
+     speed_label ~ phase,
+     labeller = labeller(
+       speed_label = c(
+         "-3" = "Water Speed = 3",
+         "-2" = "Water Speed = 2"
+       )
+     )
+  ) +
   
 
   theme_minimal()+
@@ -163,7 +185,17 @@ ggplot() +
     panel.grid.minor.y = element_blank(),
     axis.line.y.left = element_line(color = "lightgrey"),
     axis.text.y = element_text(size = 8),
-    panel.spacing.y = unit(0.9, "cm")
+    panel.spacing.y = unit(0.9, "cm"),
+    legend.title = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+    strip.text.y = element_text(face = "bold"),
+    axis.text.x.top = element_text(face = "bold"),
+    axis.ticks.x.top = element_blank()
     
   )
 
@@ -172,8 +204,8 @@ ggplot() +
 ggsave(
   filename = "test_early_late.png",
   plot = b_a_plot,
-  width = 8,
-  height = 5
+  width = ,
+  height = 20
 )
 
 

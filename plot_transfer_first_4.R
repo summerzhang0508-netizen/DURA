@@ -3,9 +3,7 @@ library(Hmisc)
 library(dplyr)
 
 #read file
-
-data <- read.csv("early_late_4_phase_PCA_error_projectile_experiment _S1-projectile_experiment_etc_speed_neg3_0_neg2_0.csv")
-#data <- read.csv("2_3_data.csv")
+data <- read.csv("2_3_data.csv")
 
 #select speed and phase (for graph producing)
 chosen_speeds <- c(-3, -2)
@@ -40,6 +38,7 @@ mean_first_cycle <- first_cycle_data %>%
     .groups = "drop"
   )
 
+
 #create custom x positions
 first_cycle_data <- first_cycle_data %>%
 mutate(
@@ -49,13 +48,13 @@ mutate(
     levels = c("L60", "L30", "R30", "R60")
   ),
   loc_num = as.numeric(target_x_label),
-  x_pos = ifelse(phase == "training_1", loc_num, loc_num + 5)
-)
+  x_pos = ifelse(phase == "training_1", loc_num * 0.7, loc_num * 0.7 + 4)
+  )
 
 #set line connecting position
 mean_first_cycle <- mean_first_cycle %>%
   mutate(
-    line_x = ifelse(phase == "training_1", 4.5, 5.5)
+    line_x = ifelse(phase == "training_1", 1.7, 5.7)
   )
 
 
@@ -96,9 +95,11 @@ first_4_plot <- ggplot() +
   
   #labels
   labs(
-    title = "Test Graph (First 4 Trial)",
+    title = "Transfer (First 4 Trials)",
     x = "Phase",
     y = "Min Error to Target",
+    color= "Target ID",
+    fill = "Target ID"
   ) +
   
   #set line
@@ -133,10 +134,17 @@ first_4_plot <- ggplot() +
   )) +
   
   scale_x_continuous(
-    breaks = c(1, 2, 3, 4, 6, 7, 8, 9),
-    labels = c("L60", "L30", "R30", "R60",
-               "L60", "L30", "R30", "R60")
-  ) +
+    breaks = c(
+      1:4 * 0.7,
+      mean(c(2, 3) * 0.7),
+      1:4 * 0.7 + 4,
+      mean(c(2, 3) * 0.7 + 4)
+    ),
+    labels = c(
+      "L60", "L30", "R30", "R60", "\n\nTraining 1",
+      "L60", "L30", "R30", "R60", "\n\nTraining 2"
+    )
+  )+
   
   #color for shade
   scale_fill_manual(values = c(
@@ -153,14 +161,32 @@ first_4_plot <- ggplot() +
     panel.grid.major.y = element_line(color = "lightgrey"),
     panel.grid.minor.y = element_blank(),
     axis.line.y.left = element_line(color = "lightgrey"),
-    panel.spacing.y = unit(0.9, "cm")
+    panel.spacing.y = unit(0.9, "cm"),
+    legend.title = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+    strip.text.y = element_text(face = "bold"),
+    axis.text.x.top = element_text(face = "bold"),
+    axis.ticks.x.top = element_blank()
   )+
-  facet_grid(speed_label ~ .)
+  facet_grid(
+    speed_label ~ .,
+    labeller = labeller(
+      speed_label = c(
+        "-3" = "Water Speed = 3",
+        "-2" = "Water Speed = 2"
+      )
+    )
+  )
 
 # Save plot
 ggsave(
   filename = "test_first_4.png",
   plot = first_4_plot,
-  width = 15,
-  height = 8
+  width = 9,
+  height = 13
 )
