@@ -3,12 +3,11 @@ library(ggplot2)
 library(Hmisc)
 library(dplyr)
 
-#set up file location
 #read file
 data <- read.csv("2_3_data.csv")
 
 #select speed (for graph producing)
-chosen_speed <- -3
+chosen_speed <- -2
 plot_data <- subset(data, speed_label == chosen_speed)
 
 #data summary (for CI)
@@ -23,6 +22,11 @@ summary_data <- plot_data %>%
     CI_hi = Mean + 1.96 * SEM,
     #color = factor(target_x_label)
   )
+
+summary_data$target_x_label <- factor(
+  summary_data$target_x_label,
+  levels = c("L60", "L30", "R30", "R60")
+)
 
 #plot the graph
 line_plot <- ggplot(
@@ -43,16 +47,16 @@ line_plot <- ggplot(
   
   #labels
   labs(
-    title = "Test Graph",
+    title = "Mean Minimum Error to Target Across Trials",
     x = "Trials",
     y = "Min Error to Target",
-    color = "Location",
+    color = "Target ID",
     
   ) +
 
   #set line and point size
-  geom_line(aes(color = target_x_label), linewidth = 0.72) +
-  geom_point(aes(color = target_x_label), size = 0.7) +
+  geom_line(aes(color = target_x_label), linewidth = 0.55) +
+  geom_point(aes(color = target_x_label), size = 0.5) +
   
   #Set y scale
   scale_y_continuous(
@@ -63,28 +67,50 @@ line_plot <- ggplot(
 
   #set line color
   scale_color_manual(values = c(
-    "R60" = "#ea242d",
-    "R30" =  "#fb8e2e",
-    "L30" =  "#2557fc",
-    "L60" = "#31c753"
+    "L60" = "darkgreen",
+    "L30" =  "#ff4500",
+    "R30" = "#1f00df",
+    "R60" =  "#ff0404"
   )) +
   
   scale_fill_manual(values = c(
-    "R60" = "pink",
-    "R30" = "gold",
-    "L30" = "lightblue",
-    "L60" = "lightgreen"
-  )) +
-
+    "L60" = "#66c266",
+    "L30" = "#ff8c66",
+    "R30" = "#7da0ff",
+    "R60" = "#ff8080"
+    ),
+    guide = "none"
+  ) +
   
-  theme_minimal()
+  annotate(
+    "text",
+    x = 1,
+    y = 105,
+    label = "Water Speed = 2",
+    hjust = 0,
+    size = 4
+  ) +
+  
+  theme_minimal() +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+    legend.title = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    strip.text.y = element_text(face = "bold"),
+    axis.text.x.top = element_text(face = "bold"),
+    axis.ticks.x.top = element_blank()
+  )
 
 # Save plot
 ggsave(
   filename = "test_line.png",
   plot = line_plot,
-  width = 15,
-  height = 6
+  width = 9,
+  height = 5
 )
 
 # Confirm it exists

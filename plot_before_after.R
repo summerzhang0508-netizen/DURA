@@ -6,7 +6,7 @@ library(dplyr)
 data <- read.csv("2_3_data.csv")
 
 #select speed and phase (for graph producing)
-chosen_speeds <- c(-3)
+chosen_speeds <- c(-2)
 chosen_phases <- c("training_1", "training_2")
 
 plot_data <- data %>%
@@ -204,8 +204,8 @@ b_a_plot <- ggplot() +
 ggsave(
   filename = "test_early_late.png",
   plot = b_a_plot,
-  width = ,
-  height = 20
+  width = 8,
+  height = 5
 )
 
 
