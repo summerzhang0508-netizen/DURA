@@ -1,8 +1,6 @@
 library(dplyr)
 library(tidyr)
 library(afex)
-library(apaTables)
-
 
 source("function_call.R")
 
@@ -13,7 +11,7 @@ data <- read.csv("2_3_data.csv")
 analysis_data <- data %>%
   select_phase("training_1") %>%
   select_speed(-3) %>%
-  select_set_order("63_36")
+  select_set_order("36_63")
 
 # create Early/Late labels
 early_late_data <- create_early_late(
@@ -56,6 +54,5 @@ learning_aov <- aov_car(
   factorize = FALSE
 )
 
-print(nice(learning_aov, sig_symbols = TRUE), digits = 2)
-
-apa.ezANOVA.table(learning_aov$Anova)
+anova_table <- as.data.frame(nice(learning_aov))
+print(anova_table)
