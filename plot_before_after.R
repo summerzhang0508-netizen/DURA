@@ -6,7 +6,7 @@ library(dplyr)
 data <- read.csv("2_3_data.csv")
 
 #select speed and phase (for graph producing)
-chosen_speeds <- c(-2)
+chosen_speeds <- c(-3)
 chosen_phases <- c("training_1", "training_2")
 
 plot_data <- data %>%
@@ -98,7 +98,7 @@ b_a_plot <- ggplot() +
   
   #labels
   labs(
-    title = "Test Graph (Early vs. Late)",
+    title = "Early vs. Late Training Performance",
     x = "Trial Number",
     y = "Min Error to Target",
     color= "Target ID",
@@ -116,9 +116,8 @@ b_a_plot <- ggplot() +
   geom_point(
     data = summary_early_late,
     aes(x = phase_x, y = Mean, color = target_x_label),
-    size = 2.5,
-    shape = 1
-  ) +
+    size = 2.5
+    ) +
   
   #set error bar
   geom_errorbar(
@@ -204,7 +203,7 @@ b_a_plot <- ggplot() +
 ggsave(
   filename = "test_early_late.png",
   plot = b_a_plot,
-  width = 8,
+  width = 9,
   height = 5
 )
 

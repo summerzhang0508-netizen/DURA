@@ -6,7 +6,7 @@ library(dplyr)
 data <- read.csv("2_3_data.csv")
 
 #select speed and phase (for graph producing)
-chosen_speeds <- c(-3, -2)
+chosen_speeds <- c(-2)
 
 training_data <- data %>%
   filter(
@@ -174,7 +174,7 @@ first_4_plot <- ggplot() +
     axis.ticks.x.top = element_blank()
   )+
   facet_grid(
-    speed_label ~ .,
+    rows = vars(speed_label),
     labeller = labeller(
       speed_label = c(
         "-3" = "Water Speed = 3",
@@ -188,5 +188,5 @@ ggsave(
   filename = "test_first_4.png",
   plot = first_4_plot,
   width = 9,
-  height = 13
+  height = 6
 )
