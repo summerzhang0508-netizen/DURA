@@ -1,7 +1,5 @@
 library(dplyr)
 
-
-
 #define speed
 select_speed <- function(data, speeds) {
   
@@ -29,8 +27,16 @@ select_phase <- function(data, phase_name) {
     )
 }
 
+#define sex
+select_sex <- function(data, sex){
+  data %>%
+    filter(
+      sex_enter %in% sex
+    )
+}
+
 #define what is early and late(can be changed)
-create_early_late <- function(data, n_trials = 4) {
+create_early_late <- function(data, n_trials) {
   
   data %>%
     group_by(ppid_full, speed_label, phase, target_x_label) %>%
@@ -45,11 +51,19 @@ create_early_late <- function(data, n_trials = 4) {
       )
     ) %>%
     ungroup() %>%
-    filter(!is.na(period))
+    filter(!is.na(period)) %>%
+    mutate(
+      ppid_full = factor(ppid_full),
+      period = factor(period, levels = c("Early", "Late")),
+      target_x_label = factor(
+      target_x_label,
+      levels = c("L60", "L30", "R30", "R60")
+    )
+  )
 }
 
 # select first n trials per participant, phase, and target
-create_first_4 <- function(data, n_trials = 4) {
+create_first_4 <- function(data, n_trials) {
   
   data %>%
     group_by(ppid_full, speed_label, phase, target_x_label) %>%
