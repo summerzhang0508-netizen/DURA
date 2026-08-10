@@ -6,7 +6,7 @@ library(dplyr)
 data <- read.csv("2_3_data.csv")
 
 #select speed and phase (for graph producing)
-chosen_speeds <- c(-3)
+chosen_speeds <- c(-2)
 chosen_phases <- c("training_1", "training_2")
 
 plot_data <- data %>%
@@ -66,6 +66,24 @@ summary_early_late <- summary_early_late %>%
 #ggplot set up
 b_a_plot <- ggplot() +
   
+  # Highlight zero-error region
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = -5,
+    ymax = 5,
+    fill = "cyan",
+    alpha = 0.45
+  ) +
+  
+  # Zero-error line
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "black",
+    linewidth = 0.8
+  ) +
   #point shade
   geom_violin(
     data = early_late_data,
@@ -99,8 +117,8 @@ b_a_plot <- ggplot() +
   #labels
   labs(
     title = "Early vs. Late Training Performance",
-    x = "Trial Number",
-    y = "Min Error to Target",
+    x = "Period",
+    y = "Min Error to Target (cm)",
     color= "Target ID",
     fill = "Target ID"
   ) +
@@ -174,7 +192,7 @@ b_a_plot <- ggplot() +
        )
      )
   ) +
-  
+ 
 
   theme_minimal() +
   

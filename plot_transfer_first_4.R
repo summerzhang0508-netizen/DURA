@@ -62,6 +62,25 @@ mean_first_cycle <- mean_first_cycle %>%
 
 first_4_plot <- ggplot() +
   
+  # Highlight zero-error region
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = -5,
+    ymax = 5,
+    fill = "cyan",
+    alpha = 0.45
+  ) +
+  
+  # Zero-error line
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "black",
+    linewidth = 0.8
+  ) +
+  
   #point shade
   geom_violin(
     data = first_cycle_data,
@@ -97,7 +116,7 @@ first_4_plot <- ggplot() +
   labs(
     title = "Transfer (First 4 Trials)",
     x = "Phase",
-    y = "Min Error to Target",
+    y = "Min Error to Target (cm)",
     color= "Target ID",
     fill = "Target ID"
   ) +
@@ -183,10 +202,13 @@ first_4_plot <- ggplot() +
     )
   )
 
+print(first_4_plot)
+
 # Save plot
 ggsave(
   filename = "test_first_4.png",
   plot = first_4_plot,
   width = 9,
-  height = 6
+  height = 5,
+  dpi = 300
 )

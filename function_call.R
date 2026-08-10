@@ -75,3 +75,58 @@ create_first_4 <- function(data, n_trials) {
     ) %>%
     ungroup()
 }
+# Transfer independent t-test
+transfer_ttest <- function(data,
+                           speed,
+                           target,
+                           training_group,
+                           training_phase,
+                           transfer_group,
+                           transfer_phase) {
+  
+  test_data <- data %>%
+    filter(
+      speed_label == speed,
+      
+      (set_order == training_group &
+         phase == training_phase &
+         target_x_label == target) |
+        
+        (set_order == transfer_group &
+           phase == transfer_phase &
+           target_x_label == target)
+    ) %>%
+    mutate(
+      condition = ifelse(
+        set_order == training_group &
+          phase == training_phase,
+        "Training",
+        "Transfer"
+      )
+    )
+  
+  # Welch independent-samples t-test
+  test <- t.test(
+    score ~ condition,
+    data = test_data
+  )
+  
+  tibble(
+    Speed = abs(speed),
+    Target = target,
+    
+    Mean_Training = mean(
+      test_data$score[test_data$condition == "Training"],
+      na.rm = TRUE
+    ),
+    
+    Mean_Transfer = mean(
+      test_data$score[test_data$condition == "Transfer"],
+      na.rm = TRUE
+    ),
+    
+    t = unname(test$statistic),
+    df = unname(test$parameter),
+    p = test$p.value
+  )
+}

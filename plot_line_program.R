@@ -101,6 +101,7 @@ early_late_data <- create_early_late(
   plot_data,
   n_trials = 4
 )
+print(early_late_data)
 
 
 # ------------------------------------------------------------
@@ -286,25 +287,6 @@ geom_rect(
 ) +
   
   # ----------------------------------------------------------
-# Early/Late backgrounds during Training 1 and Training 2
-# ----------------------------------------------------------
-
-geom_rect(
-  data = training_period_blocks,
-  aes(
-    xmin = xmin,
-    xmax = xmax,
-    ymin = -Inf,
-    ymax = Inf,
-    fill = training_shade
-  ),
-  inherit.aes = FALSE,
-  alpha = 0.30,
-  color = NA,
-  show.legend = FALSE
-) +
-  
-  # ----------------------------------------------------------
 # Alternating backgrounds during Washout 1 and Washout 2
 # ----------------------------------------------------------
 
@@ -324,21 +306,6 @@ geom_rect(
 ) +
   
   # ----------------------------------------------------------
-# Dashed boundaries every 8 trials during washouts
-# ----------------------------------------------------------
-
-geom_vline(
-  data = washout_boundaries,
-  aes(
-    xintercept = boundary
-  ),
-  inherit.aes = FALSE,
-  linetype = "dashed",
-  color = "grey45",
-  linewidth = 0.45
-) +
-  
-  # ----------------------------------------------------------
 # Dashed vertical lines at phase changes
 # ----------------------------------------------------------
 
@@ -352,7 +319,19 @@ geom_vline(
   color = "black",
   linewidth = 0.5
 ) +
-  
+
+  geom_rect(
+    aes(
+      xmin = -Inf,
+      xmax = Inf,
+      ymin = -5,
+      ymax = 5
+    ),
+    inherit.aes = FALSE,
+    fill = "cyan",
+    alpha = 0.25,
+    color = NA
+  ) +
   # ----------------------------------------------------------
 # Horizontal no-error reference line
 # ----------------------------------------------------------
@@ -361,6 +340,25 @@ geom_hline(
   yintercept = 0,
   linetype = "dashed",
   color = "black",
+  linewidth = 0.6
+) +
+  
+  # ----------------------------------------------------------
+# Vertical line for early, late
+# ----------------------------------------------------------
+
+geom_vline(
+  xintercept = c(56, 278),
+  linetype = "dashed",
+  color = "#FF69B4",
+  linewidth = 0.6
+) +
+  
+
+geom_vline(
+  xintercept = c(199, 421),
+  linetype = "dashed",
+  color = "#CB00F5",
   linewidth = 0.6
 ) +
   
@@ -402,7 +400,7 @@ geom_point(
 labs(
   title = "Mean Minimum Error to Target Across Trials",
   x = "Trials",
-  y = "Min Error to Target",
+  y = "Min Error to Target (cm)",
   color = "Target ID",
   fill = "Target ID"
 ) +
@@ -456,14 +454,6 @@ scale_fill_manual(
     # Washout blocks
     "shade_1" = "grey75",
     "shade_2" = "grey92",
-    
-    # Training 1
-    "training1_early" = "#9ecae8",
-    "training1_late" = "#f2cf70",
-    
-    # Training 2
-    "training2_early" = "#7fb9df",
-    "training2_late" = "#e6bd4d",
     
     # Target CI ribbons
     target_fill_colors

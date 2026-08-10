@@ -9,9 +9,9 @@ source("function_call.R")
 
 # select data for analysis
 analysis_data <- data %>%
-  select_phase("training_1") %>%
-  select_speed(-2) %>%
-  select_set_order("36_63")
+  select_phase("training_2") %>%
+  select_speed(-3) %>%
+  select_set_order("63_36")
 
 # create Early/Late labels
 learning_data_before_after <- create_early_late(
