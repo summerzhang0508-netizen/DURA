@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 
 # 2. Read the new dataset
-data <- read.csv("new_data.csv")
+data <- read.csv("Feb Study/Data/new_data.csv")
 
 # Select water speed
 chosen_speed <- -3
@@ -89,9 +89,9 @@ paired_data <- participant_means %>%
   ) %>%
   filter(!is.na(Early), !is.na(Late))
 
+
 # ============================================================
-# 6. Run paired t-tests
-# Each test compares Early vs. Late for one phase and target
+# 6. Run paired t-tests: Early vs. Late
 # ============================================================
 
 paired_t_tests <- paired_data %>%
@@ -121,16 +121,28 @@ paired_t_tests <- paired_data %>%
     significant_Holm = p_adjusted_Holm < 0.05
   )
 
-# Print the results
+# Print the complete results directly in the R terminal
 cat("\n========== PAIRED T-TEST RESULTS ==========\n")
-print(paired_t_tests)
+print(paired_t_tests, n = Inf, width = Inf)
 
-# Save test results as a CSV file
-write.csv(
-  paired_t_tests,
-  "new_data_early_late_paired_t_tests.csv",
-  row.names = FALSE
-)
+cat("\n========== HOLM-ADJUSTED SIGNIFICANCE ==========\n")
+
+paired_t_tests %>%
+  select(
+    phase,
+    target_x_label,
+    N,
+    Early_Mean,
+    Late_Mean,
+    Early_minus_Late,
+    t_value,
+    df,
+    p_value,
+    p_adjusted_Holm,
+    significant_Holm
+  ) %>%
+  print(n = Inf, width = Inf)
+
 
 # ============================================================
 # 7. Calculate means and 95% confidence intervals for the plot
@@ -369,26 +381,3 @@ ggsave(
   dpi = 300
 )
 
-# ============================================================
-# 9. Print a simple significance summary
-# ============================================================
-
-cat("\n========== HOLM-ADJUSTED SIGNIFICANCE ==========\n")
-
-paired_t_tests %>%
-  select(
-    phase,
-    target_x_label,
-    N,
-    Early_Mean,
-    Late_Mean,
-    Early_minus_Late,
-    p_value,
-    p_adjusted_Holm,
-    significant_Holm
-  ) %>%
-  print()
-
-cat("\nFiles saved:\n")
-cat("- new_data_early_vs_late_training.png\n")
-cat("- new_data_early_late_paired_t_tests.csv\n")
