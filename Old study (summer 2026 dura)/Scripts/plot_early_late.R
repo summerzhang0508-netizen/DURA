@@ -216,7 +216,7 @@ b_a_plot <- ggplot() +
     axis.ticks.x.top = element_blank()
   )
 
-
+print(b_a_plot)
 # Save plot
 ggsave(
   filename = "test_early_late.png",
