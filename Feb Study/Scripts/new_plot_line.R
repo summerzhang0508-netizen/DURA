@@ -13,7 +13,7 @@ source("function_call.R")
 # 1. LOAD DATA
 # ============================================================
 
-data <- read.csv("new_data.csv")
+data <- read.csv("Feb Study/Data/new_data.csv")
 
 
 # ============================================================
