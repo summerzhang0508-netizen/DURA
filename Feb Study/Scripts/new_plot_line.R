@@ -39,9 +39,9 @@ line_data <- plot_data %>%
   mutate(
     training_group = case_when(
       phase %in% c("training_1", "training_2") &
-        set_order == "36_63" ~ "Group 1",
+        experiment == "novel_TU_3.0M_spatial_generalization" ~ "Group 1",
       phase %in% c("training_1", "training_2") &
-        set_order == "63_36" ~ "Group 2",
+        experiment == "novel_TD_3.0M_spatial_generalization" ~ "Group 2",
       TRUE ~ "Combined"
     ),
     

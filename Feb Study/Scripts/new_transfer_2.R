@@ -11,8 +11,8 @@
 #   - Bonferroni correction for the 4 target comparisons
 #
 # Group mapping:
-#   36_63 = Group 1 (R60 training group)
-#   63_36 = Group 2 (L60 training group)
+#   TU = Group 1
+#   TD = Group 2
 #
 # Output:
 #   - Statistical results printed in the R console
@@ -34,8 +34,8 @@ chosen_speed <- -3
 error_variable <- "flip_min_distance_xPCA_mean_bc"
 
 training_groups <- c(
-  "36_63" = "R60 training group",
-  "63_36" = "L60 training group"
+  "novel_TU_3.0M_spatial_generalization" = "Group 1 (TU)",
+  "novel_TD_3.0M_spatial_generalization" = "Group 2 (TD)"
 )
 
 target_levels <- c("L60", "L30", "R30", "R60")
@@ -51,12 +51,12 @@ transfer_data <- data %>%
     speed_label == chosen_speed,
     phase %in% c("baseline", "washout_1_AT"),
     target_x_label %in% target_levels,
-    set_order %in% names(training_groups),
+    experiment %in% names(training_groups),
     !is.na(.data[[error_variable]])
   ) %>%
   group_by(
     ppid_full,
-    set_order,
+    experiment,
     speed_label,
     phase,
     target_x_label
@@ -76,7 +76,7 @@ transfer_data <- data %>%
 first_2_means <- transfer_data %>%
   group_by(
     ppid_full,
-    set_order,
+    experiment,
     speed_label,
     phase,
     target_x_label
@@ -92,7 +92,7 @@ first_2_means <- transfer_data %>%
   filter(trials_used > 0) %>%
   mutate(
     training_group = unname(
-      training_groups[as.character(set_order)]
+      training_groups[as.character(experiment)]
     ),
     phase = factor(
       phase,
@@ -314,8 +314,8 @@ for (group_name in unname(training_groups)) {
 cat("\n\n")
 cat("============================================================\n")
 cat("SUMMARY OF POST-HOC TESTS\n")
-cat("Group 1 = R60 training group (set_order 36_63)\n")
-cat("Group 2 = L60 training group (set_order 63_36)\n")
+cat("Group 1 = TU\n")
+cat("Group 2 = TD\n")
 cat("============================================================\n\n")
 
 all_posthoc_results <- bind_rows(posthoc_results)
@@ -326,8 +326,8 @@ if (nrow(all_posthoc_results) > 0) {
     mutate(
       training_group = recode(
         training_group,
-        "R60 training group" = "Group 1",
-        "L60 training group" = "Group 2"
+        "Group 1 (TU)" = "Group 1",
+        "Group 2 (TD)" = "Group 2"
       ),
       across(
         c(
@@ -428,8 +428,8 @@ plot_data <- first_2_means %>%
   mutate(
     training_group = factor(
       training_group,
-      levels = c("R60 training group", "L60 training group"),
-      labels = c("Group 1: R60 Training", "Group 2: L60 Training")
+      levels = c("Group 1 (TU)", "Group 2 (TD)"),
+      labels = c("Group 1: TU", "Group 2: TD")
     ),
     loc_num = as.numeric(target_x_label),
     x_pos = ifelse(
@@ -463,8 +463,8 @@ summary_data <- first_2_means %>%
   mutate(
     training_group = factor(
       training_group,
-      levels = c("R60 training group", "L60 training group"),
-      labels = c("Group 1: R60 Training", "Group 2: L60 Training")
+      levels = c("Group 1 (TU)", "Group 2 (TD)"),
+      labels = c("Group 1: TU", "Group 2: TD")
     ),
     loc_num = as.numeric(target_x_label),
     x_pos = ifelse(
