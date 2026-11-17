@@ -1,11 +1,22 @@
+# ============================================================
+# TRANSFER REGRESSION ANALYSIS
+# Predicting transfer performance from individual differences
+# ============================================================
+
+
+# ============================================================
+# 1. LOAD PACKAGES
+# ============================================================
+
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(broom)
 library(performance)
 
+
 # ============================================================
-# 1. LOAD AND MERGE DATA
+# 2. LOAD AND MERGE DATA
 # ============================================================
 
 data <- read.csv("Feb Study/Data/new_data.csv")
@@ -26,24 +37,30 @@ stopifnot(n_distinct(data_merged$ppid_full) == 36)
 
 
 # ============================================================
-# 2. SELECT TRAINING 1, WATER SPEED -3
+# 3. SELECT BASELINE AND TRANSFER TEST, SPEED -3
 # ============================================================
 
-analysis_data <- data_merged %>%
+transfer_data <- data_merged %>%
   filter(
-    phase == "training_1",
+    phase %in% c("baseline", "washout_1_AT"),
     speed_label == -3,
     !is.na(flip_min_distance_xPCA_mean_bc)
   )
 
 
+# Check that both phases are present
+print(table(transfer_data$phase))
+
+
 # ============================================================
-# 3. SELECT FIRST 2 AND LAST 2 TARGET-SPECIFIC TRIALS
+# 4. SELECT FIRST 2 TARGET-SPECIFIC TRIALS
+#    FOR EACH PARTICIPANT AND PHASE
 # ============================================================
 
-learning_data <- analysis_data %>%
+transfer_early <- transfer_data %>%
   group_by(
     ppid_full,
+    phase,
     target_x_label
   ) %>%
   arrange(
@@ -51,30 +68,27 @@ learning_data <- analysis_data %>%
     .by_group = TRUE
   ) %>%
   mutate(
-    trial_rank = row_number(),
-    total_trials = n()
+    trial_rank = row_number()
   ) %>%
   filter(
-    trial_rank <= 2 |
-      trial_rank > total_trials - 2
+    trial_rank <= 2
   ) %>%
   mutate(
-    period = ifelse(
-      trial_rank <= 2,
-      "Early",
-      "Late"
+    period = case_when(
+      phase == "baseline" ~ "Early1",
+      phase == "washout_1_AT" ~ "Early2"
     )
   ) %>%
   ungroup()
 
 
 # ============================================================
-# 4. CALCULATE EARLY AND LATE MEANS
+# 5. CALCULATE EARLY1 AND EARLY2 MEANS
 #    FIRST AVERAGE WITHIN EACH TARGET
 #    THEN AVERAGE ACROSS TARGETS
 # ============================================================
 
-learning_by_participant <- learning_data %>%
+transfer_by_participant <- transfer_early %>%
   group_by(
     ppid_full,
     target_x_label,
@@ -92,7 +106,10 @@ learning_by_participant <- learning_data %>%
     period
   ) %>%
   summarise(
-    mean_error = mean(mean_error, na.rm = TRUE),
+    mean_error = mean(
+      mean_error,
+      na.rm = TRUE
+    ),
     .groups = "drop"
   ) %>%
   pivot_wider(
@@ -100,19 +117,23 @@ learning_by_participant <- learning_data %>%
     values_from = mean_error
   ) %>%
   filter(
-    !is.na(Early),
-    !is.na(Late)
+    !is.na(Early1),
+    !is.na(Early2)
   ) %>%
   mutate(
-    Learning = Early - Late
+    transfer_score = Early2 - Early1
   )
 
 
+# Check transfer scores
+print(head(transfer_by_participant))
+
+
 # ============================================================
-# 5. MERGE PARTICIPANT-LEVEL LEARNING WITH QUESTIONNAIRE
+# 6. MERGE TRANSFER SCORES WITH QUESTIONNAIRE
 # ============================================================
 
-regression_data <- learning_by_participant %>%
+regression_data <- transfer_by_participant %>%
   left_join(
     questionnaire,
     by = "ppid_full"
@@ -120,12 +141,11 @@ regression_data <- learning_by_participant %>%
 
 
 # ============================================================
-# 6. CODE QUESTIONNAIRE RESPONSES
+# 7. CODE QUESTIONNAIRE RESPONSES
 # ============================================================
 
-# Ordinal coding:
 # Never = 0
-# Once a year or less = 1
+# Once a year + = 1
 # Once a month = 2
 # Once a week = 3
 # Multiple times per week = 4
@@ -143,9 +163,11 @@ regression_data <- regression_data %>%
     gaming_score = unname(
       response_codes[as.character(gaming_frequency)]
     ),
+    
     vr_score = unname(
       response_codes[as.character(vr_experience)]
     ),
+    
     sports_score = unname(
       response_codes[as.character(sports_participation)]
     )
@@ -153,35 +175,22 @@ regression_data <- regression_data %>%
 
 
 # ============================================================
-# 7. CHECK PARTICIPANT NUMBERS
+# 8. CHECK PARTICIPANT NUMBERS
 # ============================================================
 
 cat("\n============================================\n")
-cat("REGRESSION PARTICIPANT NUMBERS\n")
+cat("TRANSFER REGRESSION PARTICIPANT NUMBERS\n")
 cat("============================================\n")
 
 cat(
-  "Participants with learning scores:",
-  nrow(learning_by_participant),
-  "\n"
-)
-
-cat(
-  "Participants with complete questionnaire data:",
-  sum(complete.cases(
-    regression_data[, c(
-      "Learning",
-      "gaming_score",
-      "vr_score",
-      "sports_score"
-    )]
-  )),
+  "Participants with transfer scores:",
+  nrow(transfer_by_participant),
   "\n"
 )
 
 
 # ============================================================
-# 8. CHECK QUESTIONNAIRE DISTRIBUTIONS
+# 9. CHECK QUESTIONNAIRE DISTRIBUTIONS
 # ============================================================
 
 cat("\n============================================\n")
@@ -194,13 +203,13 @@ print(table(regression_data$sports_participation))
 
 
 # ============================================================
-# 9. PREPARE COMPLETE REGRESSION DATA
+# 10. PREPARE COMPLETE REGRESSION DATA
 # ============================================================
 
 regression_complete <- regression_data %>%
   select(
     ppid_full,
-    Learning,
+    transfer_score,
     gaming_score,
     vr_score,
     sports_score
@@ -212,11 +221,15 @@ stopifnot(
   !anyDuplicated(regression_complete$ppid_full)
 )
 
-
+cat(
+  "\nParticipants included in regression:",
+  nrow(regression_complete),
+  "\n"
+)
 
 
 # ============================================================
-# 10. REUSABLE MULTIPLE LINEAR REGRESSION
+# 11. REUSABLE MULTIPLE LINEAR REGRESSION FUNCTION
 # ============================================================
 
 run_regression <- function(
@@ -227,7 +240,11 @@ run_regression <- function(
 ) {
   
   # Check that variables exist
-  required_variables <- c(id, outcome, predictors)
+  required_variables <- c(
+    id,
+    outcome,
+    predictors
+  )
   
   missing_variables <- setdiff(
     required_variables,
@@ -287,13 +304,10 @@ run_regression <- function(
 
 
 # ============================================================
-# 11. SELECT YOUR OUTCOME AND PREDICTORS
+# 12. SELECT OUTCOME AND PREDICTORS
 # ============================================================
 
-# Current analysis:
-# Do gaming, VR and sports experience predict learning?
-
-outcome <- "Learning"
+outcome <- "transfer_score"
 
 predictors <- c(
   "gaming_score",
@@ -303,7 +317,7 @@ predictors <- c(
 
 
 # ============================================================
-# 12. RUN REGRESSION
+# 13. RUN REGRESSION
 # ============================================================
 
 results <- run_regression(
@@ -314,11 +328,11 @@ results <- run_regression(
 
 
 # ============================================================
-# 13. DISPLAY RESULTS
+# 14. DISPLAY REGRESSION RESULTS
 # ============================================================
 
 cat("\n============================================\n")
-cat("MULTIPLE LINEAR REGRESSION\n")
+cat("TRANSFER MULTIPLE LINEAR REGRESSION\n")
 cat("============================================\n")
 
 cat("\nRegression formula:\n")
@@ -335,7 +349,136 @@ print(results$model_fit)
 
 
 # ============================================================
-# 14. MODEL DIAGNOSTICS
+# 15. SCATTERPLOTS
+# ============================================================
+
+# GAMING FREQUENCY VS TRANSFER
+
+gaming_plot <- ggplot(
+  regression_complete,
+  aes(
+    x = gaming_score,
+    y = transfer_score
+  )
+) +
+  geom_jitter(
+    width = 0.08,
+    height = 0
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = TRUE
+  ) +
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Gaming Frequency and Transfer Performance",
+    x = "Gaming Frequency",
+    y = "Transfer Score (Early 2 - Early 1)"
+  ) +
+  theme_classic()
+
+
+# VR EXPERIENCE VS TRANSFER
+
+vr_plot <- ggplot(
+  regression_complete,
+  aes(
+    x = vr_score,
+    y = transfer_score
+  )
+) +
+  geom_jitter(
+    width = 0.08,
+    height = 0
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = TRUE
+  ) +
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "VR Experience and Transfer Performance",
+    x = "VR Experience",
+    y = "Transfer Score (Early 2 - Early 1)"
+  ) +
+  theme_classic()
+
+
+# SPORTS PARTICIPATION VS TRANSFER
+
+sports_plot <- ggplot(
+  regression_complete,
+  aes(
+    x = sports_score,
+    y = transfer_score
+  )
+) +
+  geom_jitter(
+    width = 0.08,
+    height = 0
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = TRUE
+  ) +
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Sports Participation and Transfer Performance",
+    x = "Sports Participation",
+    y = "Transfer Score (Early 2 - Early 1)"
+  ) +
+  theme_classic()
+
+
+# Display plots
+print(gaming_plot)
+print(vr_plot)
+print(sports_plot)
+
+
+# ============================================================
+# 16. SAVE SCATTERPLOTS
+# ============================================================
+
+ggsave(
+  "transfer_gaming_scatterplot.png",
+  gaming_plot,
+  width = 7,
+  height = 5,
+  dpi = 300
+)
+
+ggsave(
+  "transfer_vr_scatterplot.png",
+  vr_plot,
+  width = 7,
+  height = 5,
+  dpi = 300
+)
+
+ggsave(
+  "transfer_sports_scatterplot.png",
+  sports_plot,
+  width = 7,
+  height = 5,
+  dpi = 300
+)
+
+
+# ============================================================
+# 17. MODEL DIAGNOSTICS
 # ============================================================
 
 cat("\n============================================\n")
@@ -352,26 +495,32 @@ par(mfrow = c(1, 1))
 
 
 # ============================================================
-# 15. SAVE RESULTS
+# 18. SAVE REGRESSION RESULTS
 # ============================================================
 
 write.csv(
   results$data,
-  paste0("regression_", outcome, "_participant_data.csv"),
+  "transfer_regression_participant_data.csv",
   row.names = FALSE
 )
 
 write.csv(
   results$coefficients,
-  paste0("regression_", outcome, "_coefficients.csv"),
+  "transfer_regression_coefficients.csv",
   row.names = FALSE
 )
 
 write.csv(
   results$model_fit,
-  paste0("regression_", outcome, "_model_fit.csv"),
+  "transfer_regression_model_fit.csv",
   row.names = FALSE
 )
 
-cat("\nRegression analysis completed!\n")
 
+# ============================================================
+# 19. COMPLETED
+# ============================================================
+
+cat("\n============================================\n")
+cat("TRANSFER REGRESSION ANALYSIS COMPLETED!\n")
+cat("============================================\n")
